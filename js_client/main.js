@@ -31,7 +31,7 @@ const game = new Phaser.Game(config);
 
 function preload(){
     this.load.image("tiles", "tiled1.png");
-    this.load.tilemapTiledJSON("map","../json/tiled.json");
+    this.load.tilemapTiledJSON("map","tiled.json");
     this.load.image("Players","coeur.png");
     this.load.image("back","backgrond.png");
     this.load.image("alien","alienYellow.png");
@@ -53,7 +53,7 @@ function create(){
 
     var cameraCentreX = this.cameras.main.centerX;
     var cameraCentreY = this.cameras.main.centerY;
-    this.add.sprite(cameraCentreX,cameraCentreY,"back");
+    // this.add.sprite(cameraCentreX,cameraCentreY,"back");
     players = this.physics.add.sprite(cameraCentreX,cameraCentreY,"Players");
     players.setScale(0.5);
 

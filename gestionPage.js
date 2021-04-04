@@ -31,19 +31,23 @@ preparerlesDonnees : function(monObj){
         break;
         case ".png" :
             data.contentType = "image/png";
-            data.dossier = "assets/"
+            data.dossier = "assets/images/"
         break;
         case ".jpeg" :
             data.contentType = "image/jpeg";
-            data.dossier = "assets/"
+            data.dossier = "assets/images/"
         break;
         case ".jpg" :
             data.contentType = "image/jpg";
-            data.dossier = "assets/"
+            data.dossier = "assets/images/"
+        break;
+        case ".json" :
+            data.contentType = "application/json";
+            data.dossier = "assets/json/"
         break;
         case ".ogg" :
             data.contentType = "audio/ogg";
-            data.dossier = "assets/sond/"
+            data.dossier = "assets/sounds/"
         break;
         default : console.log("Erreur");
     }
