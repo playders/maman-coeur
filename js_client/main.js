@@ -1,6 +1,7 @@
 //configuration du jeu
 var config = {
     type : Phaser.AUTO,
+    backgroundColor : "#22E1EA",
     width : 800,
     height : 600,
     scene : {
@@ -27,11 +28,13 @@ var laser1 = false
 
 const game = new Phaser.Game(config);
 
+
 //charger les image
 
+
 function preload(){
-    this.load.image("tiles", "tiled1.png");
-    this.load.tilemapTiledJSON("map","tiled.json");
+    this.load.image("tiles", "tilesheet.png");
+    this.load.tilemapTiledJSON("map","JeuPlateforme.json");
     this.load.image("Players","coeur.png");
     this.load.image("back","backgrond.png");
     this.load.image("alien","alienYellow.png");
@@ -40,21 +43,22 @@ function preload(){
     //charger audio
     this.load.audio("kick","kick.ogg");
 }
+
 //camera,placement des image
 function create(){
+    var cameraCentreX = this.cameras.main.centerX;
+    var cameraCentreY = this.cameras.main.centerY;
 
     this.tilemap = this.make.tilemap({key: "map"});
-    this.tileset = this.tilemap.addTilesetImage("maman","tiles");
+    this.tileset = this.tilemap.addTilesetImage("tilesheet","tiles");
 
     this.downLayer = this.tilemap.createLayer("bot",this.tileset,0,0);
     this.worldLayer = this.tilemap.createLayer("world",this.tileset,0,0);
     this.topLayer = this.tilemap.createLayer("top",this.tileset,0,0);
 
 
-    var cameraCentreX = this.cameras.main.centerX;
-    var cameraCentreY = this.cameras.main.centerY;
-    // this.add.sprite(cameraCentreX,cameraCentreY,"back");
-    players = this.physics.add.sprite(cameraCentreX,cameraCentreY,"Players");
+
+    players = this.physics.add.sprite(cameraCentreX,200,"Players");
     players.setScale(0.5);
 
     //animation alien
@@ -83,10 +87,23 @@ function create(){
     //bouton du clavier
     cursor = this.input.keyboard.createCursorKeys();
     Akey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
-    Skey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+    Skey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCod);
+    controlConfig = {
+        camera : this.cameras.main,
+        left : cursor.left,
+        right : cursor.right,
+        up : cursor.up,
+        down : cursor.down,
+        speed : 0.5
+    }
+
+    controls = new Phaser.Cameras.Controls.FixedKeyControl(controlConfig);
+    
 }
 
+
 function update(time, delta){
+    controls.update(delta);
     //deplacement du player
     if (cursor.left.isDown){
         players.x = players.x -= 7;
