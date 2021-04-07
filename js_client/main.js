@@ -87,14 +87,14 @@ function create(){
     //bouton du clavier
     cursor = this.input.keyboard.createCursorKeys();
     Akey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
-    Skey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCod);
+    Skey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
     controlConfig = {
         camera : this.cameras.main,
         left : cursor.left,
         right : cursor.right,
         up : cursor.up,
         down : cursor.down,
-        speed : 0.5
+        speed : 1
     }
 
     controls = new Phaser.Cameras.Controls.FixedKeyControl(controlConfig);
