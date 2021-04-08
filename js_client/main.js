@@ -34,7 +34,7 @@ const game = new Phaser.Game(config);
 
 function preload(){
     this.load.image("tiles", "tilesheet.png");
-    this.load.tilemapTiledJSON("map","JeuPlateforme.json");
+    this.load.tilemapTiledJSON("map","JeuPlateforme1.json");
     this.load.image("Players","coeur.png");
     this.load.image("back","backgrond.png");
     this.load.image("alien","alienYellow.png");
@@ -53,8 +53,8 @@ function create(){
     this.tileset = this.tilemap.addTilesetImage("tilesheet","tiles");
 
     this.downLayer = this.tilemap.createLayer("bot",this.tileset,0,0);
-    this.worldLayer = this.tilemap.createLayer("world",this.tileset,0,0);
-    this.topLayer = this.tilemap.createLayer("top",this.tileset,0,0);
+    this.worldLayer = this.tilemap.createLayer("world",this.tileset,0,-500);
+    this.topLayer = this.tilemap.createLayer("top",this.tileset,0,-500);
 
 
 
@@ -94,16 +94,17 @@ function create(){
         right : cursor.right,
         up : cursor.up,
         down : cursor.down,
-        speed : 1
+        speed : 0.1
     }
-
+    this.worldLayer.setCollisionByProperty({colides : true});
     controls = new Phaser.Cameras.Controls.FixedKeyControl(controlConfig);
-    
+
+        this.physics.add.collider(players, this.worldLayer);
 }
 
 
 function update(time, delta){
-    controls.update(delta);
+    //controls.update(delta);
     //deplacement du player
     if (cursor.left.isDown){
         players.x = players.x -= 7;
@@ -111,6 +112,9 @@ function update(time, delta){
 
     if (cursor.right.isDown){
         players.x = players.x += 7;
+    }
+    if (cursor.up.isDown){
+        players.y = players.y += -20;
     }
 
     //lancer laser
