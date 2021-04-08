@@ -49,6 +49,10 @@ preparerlesDonnees : function(monObj){
             data.contentType = "audio/ogg";
             data.dossier = "assets/sounds/"
         break;
+        case ".wav" :
+            data.contentType = "audio/wav";
+            data.dossier = "assets/sounds/"
+        break;
         default : console.log("Erreur");
     }
     return data;
