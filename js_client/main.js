@@ -27,6 +27,8 @@ var laser = false;
 var laserReady1 = true;
 var laser1 = false;
 var isJumping = false;
+var score = 0;
+var spawn = null;
 
 const game = new Phaser.Game(config);
 
@@ -39,6 +41,8 @@ function preload() {
     
     // Charge l'image du player
     this.load.image("Players","coeur.png");
+    this.load.image("Players","coeur_blessé.png");
+
 
     // Charge l'image de l'arrière plan
     this.load.image("back","backgrond.png");
@@ -48,8 +52,9 @@ function preload() {
     this.load.image("alien1","alienYellow_walk1.png");
     this.load.image("alien2","alienYellow_walk2.png");
 
-    // Charge le son du coup de pied
-    this.load.audio("kick","kick.ogg");
+    // Charge les sons
+    this.load.audio("gemme","gemme.ogg");
+    this.load.audio("jump","jump.wav");
 }
 
 // Création du jeu
@@ -69,14 +74,34 @@ function create(){
     this.topLayer = this.tilemap.createStaticLayer("top",this.tileset, 0, 0);
     this.overlapLayer = this.tilemap.createDynamicLayer("overlap",this.tileset,0, 0);
 
+    //spawn du players
+    this.spawn = this.tilemap.findObject("objet", obj => obj.name === "spawn");
+
     // Défini les limites de la carte
     this.worldLayer.setCollisionByProperty({colides : true});
     this.physics.world.setBounds(0,0,this.tilemap.widthInPixels,this.tilemap.heightInPixels);
 
+    //afficher le score
+    var policeTitre = {
+        fontSize : "32px",
+        color : "#FF0000",
+        fontFamily : "ZCOOL KuaiLe"
+    }
+    this.scoreText = this.add.text (16 , 16, "Score : 0", policeTitre);
+    this.scoreText.setScrollFactor(0);
+    this.score = 0;
+
     // Crée le joueur et défini les limite du joueur sur la carte
-    players = this.physics.add.sprite(100, 620,"Players");
+    players = this.physics.add.sprite(this.spawn.x,this.spawn.y,"Players");
     players.setScale(0.8);
     players.setCollideWorldBounds(true);
+
+    //recuperer jemes
+    this.overlapLayer.setTileIndexCallback(50, collectGemme, this);
+    this.overlapLayer.setTileIndexCallback(51, collectGemme, this);
+    this.overlapLayer.setTileIndexCallback(52, collectGemme, this);
+    this.overlapLayer.setTileIndexCallback(53, collectGemme, this);
+    this.physics.add.overlap(players, this.overlapLayer);
 
     //animation alien
     this.anims.create({
@@ -139,12 +164,17 @@ function update(time, delta){
     this.isJumping = !players.body.onFloor();
 
     if (cursor.up.isDown && !this.isJumping) {
+        this.sound.play("jump");
         players.setVelocityY(-400);
     }
 
     if (players.y > 900) {
-        console.log('Game over');
-        this.game.destroy();
+        //this.game.destroy();
+        mortPlayers();
+    }
+    //mort du players
+    function mortPlayers(){
+        players.setTexture("Players","coeur_blessé.png");
     }
 
     //lancer laser
@@ -180,18 +210,38 @@ function update(time, delta){
     AjusterTailleEcran();
 }
 
-    function AjusterTailleEcran(){
-        var canvas = document.querySelector("canvas");
-        var fenetreWidth = window.innerWidth;
-        var fenetreHeight = window.innerHeight;
-        var fenetreRacio = fenetreWidth / fenetreHeight;
-        var configRacio = config.width/config.height;
-        if(fenetreRacio < configRacio){
-            canvas.style.width = fenetreWidth + "px";
-            canvas.style.height = (fenetreWidth/configRacio) + "px";
+function AjusterTailleEcran(){
+    var canvas = document.querySelector("canvas");
+    var fenetreWidth = window.innerWidth;
+    var fenetreHeight = window.innerHeight;
+    var fenetreRacio = fenetreWidth / fenetreHeight;
+    var configRacio = config.width/config.height;
+    if (fenetreRacio < configRacio) {
+        canvas.style.width = fenetreWidth + "px";
+        canvas.style.height = (fenetreWidth/configRacio) + "px";
     }
-        else {
-            canvas.style.width = (fenetreHeight * configRacio) + "px";
-            canvas.style.height = fenetreHeight + "px";
+    else {
+        canvas.style.width = (fenetreHeight * configRacio) + "px";
+        canvas.style.height = fenetreHeight + "px";
     }
+}
+
+var collectGemme = function (players, tile){
+    this.sound.play("gemme");
+    this.overlapLayer.removeTileAt(tile.x,tile.y).destroy();
+    switch(tile.index) {
+        case 50:
+            this.score+=5;
+            break;
+        case 51:
+            this.score+=10;
+            break;
+        case 52:
+            this.score+=1;
+            break;
+        case 53:
+            this.score+=20;
+            break;
+    }
+    this.scoreText.setText("Score : " + this.score);
 }
