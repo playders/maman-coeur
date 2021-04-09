@@ -1,3 +1,4 @@
+
 //configuration du jeu
 var config = {
     type : Phaser.AUTO,
@@ -20,29 +21,37 @@ var config = {
 //variable et constant
 var players = null;
 var cursor = null;
-var Akey;
-var Skey;
-var laserReady = true;
-var laser = false;
-var laserReady1 = true;
-var laser1 = false;
 var isJumping = false;
 var score = 0;
 var spawn = null;
-
-const game = new Phaser.Game(config);
-
+var isAlive = true;
+var restart = null;
+var life = 2;
+var level = 0;
+var levels = [
+    '1erN',
+    '2emeN'
+]
+document.getElementById("restartgame").style.display = "none";
+document.getElementById("start").onclick = function() {
+    document.getElementById("startgame").style.display = "none";
+    const game = new Phaser.Game(config);
+};
 
 // Chargement des éléments
 function preload() {
+    console.log('preload', levels[level]);
     // Charge les tiles pour la carte
     this.load.image("tiles", "tilesheet.png");
-    this.load.tilemapTiledJSON("map","1erN.json");
+    this.load.tilemapTiledJSON("map", levels[level] + ".json");
     
     // Charge l'image du player
     this.load.image("Players","coeur.png");
-    this.load.image("Players","coeur_blessé.png");
+    this.load.image("Blesse","coeur_blesse.png");
 
+    // Charge la vie ä 2 et le délai à "true"
+    this.power = 2;
+    this.delaiOK = true;
 
     // Charge l'image de l'arrière plan
     this.load.image("back","backgrond.png");
@@ -51,6 +60,10 @@ function preload() {
     this.load.image("alien","alienYellow.png");
     this.load.image("alien1","alienYellow_walk1.png");
     this.load.image("alien2","alienYellow_walk2.png");
+
+    //charger Game Over
+    this.load.image("GameOver","GameOver.jpg");
+    this.load.image("restart","restart1.png")
 
     // Charge les sons
     this.load.audio("gemme","gemme.ogg");
@@ -81,7 +94,7 @@ function create(){
     this.worldLayer.setCollisionByProperty({colides : true});
     this.physics.world.setBounds(0,0,this.tilemap.widthInPixels,this.tilemap.heightInPixels);
 
-    //afficher le score
+    // Afficher le score
     var policeTitre = {
         fontSize : "32px",
         color : "#FF0000",
@@ -91,10 +104,37 @@ function create(){
     this.scoreText.setScrollFactor(0);
     this.score = 0;
 
+    // Afficher le score
+    this.lifeText = this.add.text (316 , 16, "Live : " + life, policeTitre);
+    this.lifeText.setScrollFactor(0);
+
     // Crée le joueur et défini les limite du joueur sur la carte
     players = this.physics.add.sprite(this.spawn.x,this.spawn.y,"Players");
     players.setScale(0.8);
     players.setCollideWorldBounds(true);
+
+    //TODO
+    //players blessé
+    function PlayersBlesse() {
+        if (this.delaiOK) {
+            this.delaiOK = false;
+            console.log('pipi')
+            if (this.power === 2) {
+                players.setTexture("Blesse");
+                setTimeout(() => {
+                    console.log('caca')
+                    this.delaiOK = true;
+                }, 2000);
+                this.power--;
+            } else {
+                perdUneVie(this);            
+            }
+        }
+        /*
+
+
+        */
+    }
 
     //recuperer jemes
     this.overlapLayer.setTileIndexCallback(50, collectGemme, this);
@@ -102,6 +142,9 @@ function create(){
     this.overlapLayer.setTileIndexCallback(52, collectGemme, this);
     this.overlapLayer.setTileIndexCallback(53, collectGemme, this);
     this.physics.add.overlap(players, this.overlapLayer);
+
+    //pic
+    this.overlapLayer.setTileIndexCallback(71, PlayersBlesse, this);
 
     //animation alien
     this.anims.create({
@@ -113,10 +156,13 @@ function create(){
         frameRate: 8,
         repeat: -1
     });
-    var alienYellow = this.add.sprite(500, cameraCentreY,"alien1").play("alienAnim");
+    var alienYellow = this.physics.add.sprite(340,620,"alien1").play("alienAnim");
+    this.physics.add.collider(alienYellow, this.worldLayer);
+    this.physics.add.overlap(players, alienYellow, attaque);
+    alienYellow.setScale(0.5);
     var tween = this.tweens.add({
         targets : alienYellow,
-        x : 800,
+        x : 450,
         ease : "Linear",
         duration : 1000,
         yoyo : true,
@@ -147,14 +193,22 @@ function create(){
     this.cameras.main.startFollow(players);
     this.cameras.main.setBounds(0, 0,this.tilemap.widthInPixels,this.tilemap.heightInPixels);
 }
+function attaque(){
+    if (isJumping){
+        console.log("enemie mort");
+    }
+    else if (!isJumping){
+        // console.log("tu est mort");
+    }
+}
 
 
 function update(time, delta){
     //controls.update(delta);
     //deplacement du player
-    if (cursor.left.isDown){
+    if (cursor.left.isDown && isAlive){
         players.setVelocityX(-250);
-    } else if (cursor.right.isDown){
+    } else if (cursor.right.isDown && isAlive){
         players.setVelocityX(250);
     } else {
         players.setVelocityX(0);
@@ -163,19 +217,18 @@ function update(time, delta){
     // isJumping est vrai si le joueur ne touche pas le sol.
     this.isJumping = !players.body.onFloor();
 
-    if (cursor.up.isDown && !this.isJumping) {
+    if (cursor.up.isDown && !this.isJumping && isAlive) {
         this.sound.play("jump");
         players.setVelocityY(-400);
     }
 
+    //vide
     if (players.y > 900) {
-        //this.game.destroy();
-        mortPlayers();
-    }
-    //mort du players
-    function mortPlayers(){
-        players.setTexture("Players","coeur_blessé.png");
-    }
+        this.game.destroy();
+        //PlayersBlessé();
+    }    
+
+
 
     //lancer laser
     /*
@@ -244,4 +297,20 @@ var collectGemme = function (players, tile){
             break;
     }
     this.scoreText.setText("Score : " + this.score);
+}
+
+function perdUneVie(game) {
+    if (life > 0) {
+        game.scene.restart();
+    } else {
+        gameOver(game);
+    }
+    life--;
+}
+
+function gameOver(game) {
+    document.getElementById("restart").onclick = function() {
+        document.getElementById("restartgame").style.display = "none";
+        const game = new Phaser.Game(config);
+    };
 }
