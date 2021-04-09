@@ -1,3 +1,4 @@
+
 //configuration du jeu
 var config = {
     type : Phaser.AUTO,
@@ -29,6 +30,8 @@ var laser1 = false;
 var isJumping = false;
 var score = 0;
 var spawn = null;
+var isAlive = true;
+var restart = null;
 
 const game = new Phaser.Game(config);
 
@@ -41,7 +44,7 @@ function preload() {
     
     // Charge l'image du player
     this.load.image("Players","coeur.png");
-    this.load.image("Players","coeur_blessé.png");
+    this.load.image("Blesse","coeur_blesse.png");
 
 
     // Charge l'image de l'arrière plan
@@ -51,6 +54,10 @@ function preload() {
     this.load.image("alien","alienYellow.png");
     this.load.image("alien1","alienYellow_walk1.png");
     this.load.image("alien2","alienYellow_walk2.png");
+
+    //charger Game Over
+    this.load.image("GameOver","GameOver.jpg");
+    this.load.image("restart","restart1.png")
 
     // Charge les sons
     this.load.audio("gemme","gemme.ogg");
@@ -96,12 +103,28 @@ function create(){
     players.setScale(0.8);
     players.setCollideWorldBounds(true);
 
+    //TODO
+    //players blessé
+    function PlayersBlessé(){
+        players.setTexture("Blesse");
+        this.add.sprite(750,500,"GameOver");
+        restart = this.add.sprite(750,630,"restart").setInteractive();
+        restart.setScale(0.5);
+        restart.on("pointerdown", function(){
+            
+        });
+        isAlive = false;
+    }
+
     //recuperer jemes
     this.overlapLayer.setTileIndexCallback(50, collectGemme, this);
     this.overlapLayer.setTileIndexCallback(51, collectGemme, this);
     this.overlapLayer.setTileIndexCallback(52, collectGemme, this);
     this.overlapLayer.setTileIndexCallback(53, collectGemme, this);
     this.physics.add.overlap(players, this.overlapLayer);
+
+    //pic
+    this.overlapLayer.setTileIndexCallback(71, PlayersBlessé, this);
 
     //animation alien
     this.anims.create({
@@ -113,10 +136,13 @@ function create(){
         frameRate: 8,
         repeat: -1
     });
-    var alienYellow = this.add.sprite(500, cameraCentreY,"alien1").play("alienAnim");
+    var alienYellow = this.physics.add.sprite(340,620,"alien1").play("alienAnim");
+    this.physics.add.collider(alienYellow, this.worldLayer);
+    this.physics.add.overlap(players, alienYellow, attaque);
+    alienYellow.setScale(0.5);
     var tween = this.tweens.add({
         targets : alienYellow,
-        x : 800,
+        x : 450,
         ease : "Linear",
         duration : 1000,
         yoyo : true,
@@ -147,14 +173,22 @@ function create(){
     this.cameras.main.startFollow(players);
     this.cameras.main.setBounds(0, 0,this.tilemap.widthInPixels,this.tilemap.heightInPixels);
 }
+function attaque(){
+    if (isJumping){
+        console.log("enemie mort");
+    }
+    else if (!isJumping){
+        console.log("tu est mort");
+    }
+}
 
 
 function update(time, delta){
     //controls.update(delta);
     //deplacement du player
-    if (cursor.left.isDown){
+    if (cursor.left.isDown && isAlive){
         players.setVelocityX(-250);
-    } else if (cursor.right.isDown){
+    } else if (cursor.right.isDown && isAlive){
         players.setVelocityX(250);
     } else {
         players.setVelocityX(0);
@@ -163,19 +197,18 @@ function update(time, delta){
     // isJumping est vrai si le joueur ne touche pas le sol.
     this.isJumping = !players.body.onFloor();
 
-    if (cursor.up.isDown && !this.isJumping) {
+    if (cursor.up.isDown && !this.isJumping && isAlive) {
         this.sound.play("jump");
         players.setVelocityY(-400);
     }
 
+    //vide
     if (players.y > 900) {
-        //this.game.destroy();
-        mortPlayers();
-    }
-    //mort du players
-    function mortPlayers(){
-        players.setTexture("Players","coeur_blessé.png");
-    }
+        this.game.destroy();
+        //PlayersBlessé();
+    }    
+
+
 
     //lancer laser
     /*
