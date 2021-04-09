@@ -27,7 +27,7 @@ var spawn = null;
 var isAlive = true;
 var restart = null;
 var life = 2;
-var level = 0;
+var level = 1;
 var levels = [
     '1erN',
     '2emeN'
@@ -43,7 +43,7 @@ function preload() {
     console.log('preload', levels[level]);
     // Charge les tiles pour la carte
     this.load.image("tiles", "tilesheet.png");
-    this.load.tilemapTiledJSON("map", levels[level] + ".json");
+    this.load.tilemapTiledJSON("map", "levels.json");
     
     // Charge l'image du player
     this.load.image("Players","coeur.png");
@@ -82,10 +82,9 @@ function create(){
     this.tileset = this.tilemap.addTilesetImage("tilesheet","tiles");
 
     // Affichage des couches de la carte
-    this.downLayer = this.tilemap.createStaticLayer("bot",this.tileset,0, 0);
-    this.worldLayer = this.tilemap.createStaticLayer("world",this.tileset,0, 0);
-    this.topLayer = this.tilemap.createStaticLayer("top",this.tileset, 0, 0);
-    this.overlapLayer = this.tilemap.createDynamicLayer("overlap",this.tileset,0, 0);
+    this.downLayer = this.tilemap.createLayer("bot-level" + level,this.tileset,0, 0);
+    this.worldLayer = this.tilemap.createLayer("world-level" + level,this.tileset,0, 0);
+    this.overlapLayer = this.tilemap.createLayer("overlap-level" + level,this.tileset,0, 0);
 
     //spawn du players
     this.spawn = this.tilemap.findObject("objet", obj => obj.name === "spawn");
@@ -300,12 +299,16 @@ var collectGemme = function (players, tile){
 }
 
 function perdUneVie(game) {
+    level++;
+    game.scene.restart();
+    /*
     if (life > 0) {
         game.scene.restart();
     } else {
         gameOver(game);
     }
     life--;
+    */
 }
 
 function gameOver(game) {
