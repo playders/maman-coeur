@@ -21,31 +21,37 @@ var config = {
 //variable et constant
 var players = null;
 var cursor = null;
-var Akey;
-var Skey;
-var laserReady = true;
-var laser = false;
-var laserReady1 = true;
-var laser1 = false;
 var isJumping = false;
 var score = 0;
 var spawn = null;
 var isAlive = true;
 var restart = null;
-
-const game = new Phaser.Game(config);
-
+var life = 2;
+var level = 0;
+var levels = [
+    '1erN',
+    '2emeN'
+]
+document.getElementById("restartgame").style.display = "none";
+document.getElementById("start").onclick = function() {
+    document.getElementById("startgame").style.display = "none";
+    const game = new Phaser.Game(config);
+};
 
 // Chargement des éléments
 function preload() {
+    console.log('preload', levels[level]);
     // Charge les tiles pour la carte
     this.load.image("tiles", "tilesheet.png");
-    this.load.tilemapTiledJSON("map","1erN.json");
+    this.load.tilemapTiledJSON("map", levels[level] + ".json");
     
     // Charge l'image du player
     this.load.image("Players","coeur.png");
     this.load.image("Blesse","coeur_blesse.png");
 
+    // Charge la vie ä 2 et le délai à "true"
+    this.power = 2;
+    this.delaiOK = true;
 
     // Charge l'image de l'arrière plan
     this.load.image("back","backgrond.png");
@@ -88,7 +94,7 @@ function create(){
     this.worldLayer.setCollisionByProperty({colides : true});
     this.physics.world.setBounds(0,0,this.tilemap.widthInPixels,this.tilemap.heightInPixels);
 
-    //afficher le score
+    // Afficher le score
     var policeTitre = {
         fontSize : "32px",
         color : "#FF0000",
@@ -98,6 +104,10 @@ function create(){
     this.scoreText.setScrollFactor(0);
     this.score = 0;
 
+    // Afficher le score
+    this.lifeText = this.add.text (316 , 16, "Live : " + life, policeTitre);
+    this.lifeText.setScrollFactor(0);
+
     // Crée le joueur et défini les limite du joueur sur la carte
     players = this.physics.add.sprite(this.spawn.x,this.spawn.y,"Players");
     players.setScale(0.8);
@@ -105,15 +115,25 @@ function create(){
 
     //TODO
     //players blessé
-    function PlayersBlessé(){
-        players.setTexture("Blesse");
-        this.add.sprite(750,500,"GameOver");
-        restart = this.add.sprite(750,630,"restart").setInteractive();
-        restart.setScale(0.5);
-        restart.on("pointerdown", function(){
-            
-        });
-        isAlive = false;
+    function PlayersBlesse() {
+        if (this.delaiOK) {
+            this.delaiOK = false;
+            console.log('pipi')
+            if (this.power === 2) {
+                players.setTexture("Blesse");
+                setTimeout(() => {
+                    console.log('caca')
+                    this.delaiOK = true;
+                }, 2000);
+                this.power--;
+            } else {
+                perdUneVie(this);            
+            }
+        }
+        /*
+
+
+        */
     }
 
     //recuperer jemes
@@ -124,7 +144,7 @@ function create(){
     this.physics.add.overlap(players, this.overlapLayer);
 
     //pic
-    this.overlapLayer.setTileIndexCallback(71, PlayersBlessé, this);
+    this.overlapLayer.setTileIndexCallback(71, PlayersBlesse, this);
 
     //animation alien
     this.anims.create({
@@ -178,7 +198,7 @@ function attaque(){
         console.log("enemie mort");
     }
     else if (!isJumping){
-        console.log("tu est mort");
+        // console.log("tu est mort");
     }
 }
 
@@ -277,4 +297,20 @@ var collectGemme = function (players, tile){
             break;
     }
     this.scoreText.setText("Score : " + this.score);
+}
+
+function perdUneVie(game) {
+    if (life > 0) {
+        game.scene.restart();
+    } else {
+        gameOver(game);
+    }
+    life--;
+}
+
+function gameOver(game) {
+    document.getElementById("restart").onclick = function() {
+        document.getElementById("restartgame").style.display = "none";
+        const game = new Phaser.Game(config);
+    };
 }
