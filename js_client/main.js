@@ -150,7 +150,6 @@ function create(){
     // Portail
     this.overlapLayer.setTileIndexCallback(26, NextLevel, this);
     this.overlapLayer.setTileIndexCallback(11, NextLevel, this);
-    console.log(this.spawn2F.x);
 
     // Coeur
     this.overlapLayer.setTileIndexCallback(68, AddLife, this);
