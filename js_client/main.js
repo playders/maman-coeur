@@ -20,27 +20,25 @@ var config = {
 
 //variable et constant
 var players = null;
+var alienYellow = null;
 var cursor = null;
 var isJumping = false;
 var score = 0;
 var spawn = null;
-var isAlive = true;
-var restart = null;
 var life = 2;
 var level = 1;
-var levels = [
-    '1erN',
-    '2emeN'
-]
-document.getElementById("restartgame").style.display = "none";
+
 document.getElementById("start").onclick = function() {
     document.getElementById("startgame").style.display = "none";
-    const game = new Phaser.Game(config);
+    new Phaser.Game(config);
+    life = 2;
+    level = 1;
+    score = 0;
 };
 
 // Chargement des éléments
 function preload() {
-    console.log('preload', levels[level]);
+
     // Charge les tiles pour la carte
     this.load.image("tiles", "tilesheet.png");
     this.load.tilemapTiledJSON("map", "levels.json");
@@ -60,10 +58,6 @@ function preload() {
     this.load.image("alien","alienYellow.png");
     this.load.image("alien1","alienYellow_walk1.png");
     this.load.image("alien2","alienYellow_walk2.png");
-
-    //charger Game Over
-    this.load.image("GameOver","GameOver.jpg");
-    this.load.image("restart","restart1.png")
 
     // Charge les sons
     this.load.audio("gemme","gemme.ogg");
@@ -99,12 +93,11 @@ function create(){
         color : "#FF0000",
         fontFamily : "ZCOOL KuaiLe"
     }
-    this.scoreText = this.add.text (16 , 16, "Score : 0", policeTitre);
+    this.scoreText = this.add.text (16 , 16, "Score : " + score, policeTitre);
     this.scoreText.setScrollFactor(0);
-    this.score = 0;
 
     // Afficher le score
-    this.lifeText = this.add.text (316 , 16, "Live : " + life, policeTitre);
+    this.lifeText = this.add.text (316 , 16, "Life : " + life, policeTitre);
     this.lifeText.setScrollFactor(0);
 
     // Crée le joueur et défini les limite du joueur sur la carte
@@ -112,27 +105,22 @@ function create(){
     players.setScale(0.8);
     players.setCollideWorldBounds(true);
 
-    //TODO
-    //players blessé
-    function PlayersBlesse() {
-        if (this.delaiOK) {
-            this.delaiOK = false;
-            console.log('pipi')
-            if (this.power === 2) {
-                players.setTexture("Blesse");
-                setTimeout(() => {
-                    console.log('caca')
-                    this.delaiOK = true;
-                }, 2000);
-                this.power--;
-            } else {
-                perdUneVie(this);            
-            }
+    // Va au prochain niveau
+    function NextLevel() {
+        level++;
+        if (level > 2) {
+            this.game.destroy();
+            FinDePartie(this.game, true);
+        } else {
+            this.scene.restart();
         }
-        /*
+    }
 
-
-        */
+    // Ajoute une vie
+    function AddLife(obj, tile) {
+        this.power = 2;
+        players.setTexture("Players");
+        this.overlapLayer.removeTileAt(tile.x,tile.y).destroy();
     }
 
     //recuperer jemes
@@ -142,8 +130,14 @@ function create(){
     this.overlapLayer.setTileIndexCallback(53, collectGemme, this);
     this.physics.add.overlap(players, this.overlapLayer);
 
-    //pic
+    // Pic
     this.overlapLayer.setTileIndexCallback(71, PlayersBlesse, this);
+
+    // Portail
+    this.overlapLayer.setTileIndexCallback(26, NextLevel, this);
+
+    // Coeur
+    this.overlapLayer.setTileIndexCallback(68, AddLife, this);
 
     //animation alien
     this.anims.create({
@@ -155,9 +149,9 @@ function create(){
         frameRate: 8,
         repeat: -1
     });
-    var alienYellow = this.physics.add.sprite(340,620,"alien1").play("alienAnim");
+    alienYellow = this.physics.add.sprite(340,620,"alien1").play("alienAnim");
     this.physics.add.collider(alienYellow, this.worldLayer);
-    this.physics.add.overlap(players, alienYellow, attaque);
+    // this.physics.add.overlap(players, alienYellow, attaque);
     alienYellow.setScale(0.5);
     var tween = this.tweens.add({
         targets : alienYellow,
@@ -191,23 +185,24 @@ function create(){
     // Gère la caméra
     this.cameras.main.startFollow(players);
     this.cameras.main.setBounds(0, 0,this.tilemap.widthInPixels,this.tilemap.heightInPixels);
-}
-function attaque(){
-    if (isJumping){
-        console.log("enemie mort");
-    }
-    else if (!isJumping){
-        // console.log("tu est mort");
-    }
+
+    function attaque(){
+        if (!players.body.onFloor()){
+            console.log("enemie mort");
+        }
+        else {
+            console.log("tu est mort");
+        }
+    }    
 }
 
 
 function update(time, delta){
     //controls.update(delta);
     //deplacement du player
-    if (cursor.left.isDown && isAlive){
+    if (cursor.left.isDown){
         players.setVelocityX(-250);
-    } else if (cursor.right.isDown && isAlive){
+    } else if (cursor.right.isDown){
         players.setVelocityX(250);
     } else {
         players.setVelocityX(0);
@@ -216,15 +211,14 @@ function update(time, delta){
     // isJumping est vrai si le joueur ne touche pas le sol.
     this.isJumping = !players.body.onFloor();
 
-    if (cursor.up.isDown && !this.isJumping && isAlive) {
+    if (cursor.space.isDown && !this.isJumping) {
         this.sound.play("jump");
         players.setVelocityY(-400);
     }
 
-    //vide
+    // Vide
     if (players.y > 900) {
-        this.game.destroy();
-        //PlayersBlessé();
+        perdUneVie(this);
     }    
 
 
@@ -260,6 +254,38 @@ function update(time, delta){
     }
     */
     AjusterTailleEcran();
+
+    // Gère la collision entre le joueur et l'enemi.
+    this.physics.world.collide(players, alienYellow, function(player, enemy){
+ 
+        // Lorsque le joueur saute sur l'enemi, tue l'enemi.
+        if(enemy.body.touching.up && player.body.touching.down){
+            alienYellow.destroy();
+        }
+        // Sinon blesse le joueur.
+        else {
+            PlayersBlesse(this);
+        }
+    }, null, this);
+}
+
+// Players blessé
+function PlayersBlesse(obj, obj2) {
+    if (obj2) {
+        obj = this;
+    }
+    if (obj.delaiOK) {
+        obj.delaiOK = false;
+        if (obj.power === 2) {
+            players.setTexture("Blesse");
+            setTimeout(() => {
+                obj.delaiOK = true;
+            }, 1000);
+            obj.power--;
+        } else {
+            perdUneVie(obj);            
+        }
+    }
 }
 
 function AjusterTailleEcran(){
@@ -283,37 +309,37 @@ var collectGemme = function (players, tile){
     this.overlapLayer.removeTileAt(tile.x,tile.y).destroy();
     switch(tile.index) {
         case 50:
-            this.score+=5;
+            score+=5;
             break;
         case 51:
-            this.score+=10;
+            score+=10;
             break;
         case 52:
-            this.score+=1;
+            score+=1;
             break;
         case 53:
-            this.score+=20;
+            score+=20;
             break;
     }
-    this.scoreText.setText("Score : " + this.score);
+    this.scoreText.setText("Score : " + score);
 }
 
 function perdUneVie(game) {
-    level++;
-    game.scene.restart();
-    /*
     if (life > 0) {
         game.scene.restart();
     } else {
-        gameOver(game);
+        FinDePartie(game.game, false);
     }
     life--;
-    */
 }
 
-function gameOver(game) {
-    document.getElementById("restart").onclick = function() {
-        document.getElementById("restartgame").style.display = "none";
-        const game = new Phaser.Game(config);
-    };
+function FinDePartie(game, win) {
+    game.destroy(true, false);
+    if (win) {
+        alert('Vous avez gagné avec ' + score + ' points !');
+    } else {
+        alert('Game over');
+    }
+    document.getElementById("start").innerHTML = "Restart Game";
+    document.getElementById("startgame").style.display = "block";
 }
