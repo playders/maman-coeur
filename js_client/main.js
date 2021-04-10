@@ -18,9 +18,8 @@ var config = {
     }
 }
 
-//variable et constant
+// Variable et constant
 var players = null;
-var aliensYellow = [];
 var cursor = null;
 var isJumping = false;
 var score = 0;
@@ -30,12 +29,20 @@ var spawn2 = null;
 var life = 2;
 var level = 1;
 
+// Initialise le tableau des scores
+getScores().map(s => addScoreLine(s.name, s.score));
+
 document.getElementById("start").onclick = function() {
     document.getElementById("startgame").style.display = "none";
     new Phaser.Game(config);
     life = 2;
     level = 1;
     score = 0;
+};
+
+document.getElementById("valider-nom").onclick = function() {
+    document.getElementById("insert-name").style.display = "none";
+    document.getElementById("tableau-score").style.display = "block";
 };
 
 // Chargement des éléments
@@ -158,12 +165,15 @@ function create(){
         repeat: -1
     });
     
-    aliensYellow.push(this.physics.add.sprite(this.spawns[0].x,this.spawns[0].y, "alien1").play("alienAnim"));
-    aliensYellow.push(this.physics.add.sprite(this.spawns[1].x,this.spawns[1].y, "alien1").play("alienAnim"));
+    this.aliensYellow = [];
+    this.aliensYellow.push(this.physics.add.sprite(this.spawns[0].x,this.spawns[0].y, "alien1").play("alienAnim"));
+    this.aliensYellow.push(this.physics.add.sprite(this.spawns[1].x,this.spawns[1].y, "alien1").play("alienAnim"));
 
-    aliensYellow.map((alienYellow, index) => {
+    this.aliensYellow.map((alienYellow, index) => {
         this.physics.add.collider(alienYellow, this.worldLayer);
         alienYellow.setScale(0.5);
+        console.log('index', index);
+        console.log('this.spawns', this.spawns);
         var tween = this.tweens.add({
             targets : alienYellow,
             x : this.spawns[index].x + 150,
@@ -268,7 +278,7 @@ function update(time, delta){
     AjusterTailleEcran();
 
     // Gère la collision entre le joueur et l'enemi.
-    aliensYellow.map(alienYellow => {
+    this.aliensYellow.map(alienYellow => {
         this.physics.world.collide(players, alienYellow, function(player, enemy){
     
             // Lorsque le joueur saute sur l'enemi, tue l'enemi.
@@ -350,8 +360,38 @@ function perdUneVie(game) {
 function FinDePartie(game, win) {
     game.destroy(true, false);
     if (win) {
-        alert('Vous avez gagné avec ' + score + ' points !');
+        document.getElementById("message").innerHTML = "Vous avez gagné avec " + score + " points !";
+    } else {
+        document.getElementById("message").innerHTML = "Game over"
     }
-    document.getElementById("start").innerHTML = "GameOver Restart Game";
+
+    addScore(score);
+    document.getElementById("start").innerHTML = "Restart Game";
     document.getElementById("startgame").style.display = "block";
+}
+
+// Récupère la liste des scores
+function getScores() {
+    return JSON.parse(localStorage.getItem('scores')) || [];
+}
+
+// Ajoute un score
+function addScore(score) {
+    const name = document.getElementById("playername").value;
+    newScore = {
+        name,
+        score
+    }
+    addScoreLine(name, score);
+    scores = getScores();
+    scores.push(newScore);
+    localStorage.setItem('scores', JSON.stringify(scores));
+}
+
+function addScoreLine(name, score) {
+    var ul = document.getElementById("list-scores");
+    var li = document.createElement("li");
+    li.classList.add("list-group-item");
+    li.appendChild(document.createTextNode(name + " : " + score));
+    ul.appendChild(li);
 }

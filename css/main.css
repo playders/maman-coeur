@@ -1,22 +1,24 @@
+.container {
+    text-align: center;
+}
+
+.container > * {
+    margin: 1em 0;
+}
+
 #start {
-    background-color: rgb(36, 92, 14);
-    padding: .5em;
-    -moz-border-radius: 200px;
-    -webkit-border-radius: 64px;
-    border-radius: 60px;
-    color: #fff;
-    font-size: 205px;
-    text-decoration: none;
-    border: none;
-   }
-#restart {
-    background-color: rgb(36, 92, 14);
-    padding: .5em;
-    -moz-border-radius: 200px;
-    -webkit-border-radius: 64px;
-    border-radius: 60px;
-    color: #fff;
-    font-size: 205px;
-    text-decoration: none;
-    border: none;
-   }
+    font-size: 2.5em !important;
+    animation-duration: 1s;
+    animation-name: clignoter;
+    animation-iteration-count: infinite;
+    transition: none;
+}
+@keyframes clignoter {
+    0%   { opacity:1; }
+    50%   {opacity:0.5; }
+    100% { opacity:1; }
+}
+
+#tableau-score {
+    display: none;
+}
