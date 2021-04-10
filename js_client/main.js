@@ -21,10 +21,16 @@ var config = {
 //variable et constant
 var players = null;
 var alienYellow = null;
+var alienYellow1 = null;
 var cursor = null;
 var isJumping = false;
 var score = 0;
 var spawn = null;
+var spawn1 = null;
+var spawn2 = null;
+var spawn2F = null;
+var spawn3 = null;
+var boss = null;
 var life = 2;
 var level = 1;
 
@@ -59,6 +65,7 @@ function preload() {
     this.load.image("alien1","alienYellow_walk1.png");
     this.load.image("alien2","alienYellow_walk2.png");
 
+
     // Charge les sons
     this.load.audio("gemme","gemme.ogg");
     this.load.audio("jump","jump.wav");
@@ -82,6 +89,13 @@ function create(){
 
     //spawn du players
     this.spawn = this.tilemap.findObject("objet", obj => obj.name === "spawn");
+
+    //spawn enemis
+    this.spawn1 = this.tilemap.findObject("objet", obj => obj.name === "enemis1");
+    this.spawn2 = this.tilemap.findObject("objet", obj => obj.name === "enemis2");
+    this.spawn2F = this.tilemap.findObject("objet", obj => obj.name === "enemis2F");
+    this.spawn3 = this.tilemap.findObject("objet", obj => obj.name === "enemis3");
+    this.boss = this.tilemap.findObject("objet", obj => obj.name === "boss");
 
     // Défini les limites de la carte
     this.worldLayer.setCollisionByProperty({colides : true});
@@ -108,7 +122,7 @@ function create(){
     // Va au prochain niveau
     function NextLevel() {
         level++;
-        if (level > 2) {
+        if (level > 3) {
             this.game.destroy();
             FinDePartie(this.game, true);
         } else {
@@ -135,10 +149,11 @@ function create(){
 
     // Portail
     this.overlapLayer.setTileIndexCallback(26, NextLevel, this);
+    this.overlapLayer.setTileIndexCallback(11, NextLevel, this);
+    console.log(this.spawn2F.x);
 
     // Coeur
     this.overlapLayer.setTileIndexCallback(68, AddLife, this);
-
     //animation alien
     this.anims.create({
         key: "alienAnim",
@@ -149,7 +164,8 @@ function create(){
         frameRate: 8,
         repeat: -1
     });
-    alienYellow = this.physics.add.sprite(340,620,"alien1").play("alienAnim");
+    
+    alienYellow = this.physics.add.sprite(this.spawn1.x,this.spawn1.y,"alien1").play("alienAnim");
     this.physics.add.collider(alienYellow, this.worldLayer);
     // this.physics.add.overlap(players, alienYellow, attaque);
     alienYellow.setScale(0.5);
@@ -165,6 +181,32 @@ function create(){
         onYoyo : function (){ alienYellow.flipX = !alienYellow.flipX},
         onRepeat : function (){alienYellow.flipX = !alienYellow.flipX}
     });
+        //animation alien2
+        this.anims.create({
+            key: "alienAnim",
+            frames: [
+                {key: "alien1"},
+                {key: "alien2"}
+            ],
+            frameRate: 8,
+            repeat: -1
+        });
+        alienYellow1 = this.physics.add.sprite(this.spawn2.x,this.spawn2.y,"alien1").play("alienAnim");
+        this.physics.add.collider(alienYellow1, this.worldLayer);
+        // this.physics.add.overlap(players, alienYellow, attaque);
+        alienYellow1.setScale(0.5);
+        var tween = this.tweens.add({
+            targets : alienYellow1,
+            x : 450,
+            ease : "Linear",
+            duration : 1000,
+            yoyo : true,
+            repeat : -1,
+            onStart : function (){},
+            onComplete : function (){},
+            onYoyo : function (){ alienYellow1.flipX = !alienYellow1.flipX},
+            onRepeat : function (){alienYellow1.flipX = !alienYellow1.flipX}
+        });
 
     //bouton du clavier
     cursor = this.input.keyboard.createCursorKeys();
@@ -337,9 +379,7 @@ function FinDePartie(game, win) {
     game.destroy(true, false);
     if (win) {
         alert('Vous avez gagné avec ' + score + ' points !');
-    } else {
-        alert('Game over');
     }
-    document.getElementById("start").innerHTML = "Restart Game";
+    document.getElementById("start").innerHTML = "GameOver Restart Game";
     document.getElementById("startgame").style.display = "block";
 }
