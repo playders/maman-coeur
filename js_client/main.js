@@ -20,17 +20,13 @@ var config = {
 
 //variable et constant
 var players = null;
-var alienYellow = null;
-var alienYellow1 = null;
+var aliensYellow = [];
 var cursor = null;
 var isJumping = false;
 var score = 0;
 var spawn = null;
 var spawn1 = null;
 var spawn2 = null;
-var spawn2F = null;
-var spawn3 = null;
-var boss = null;
 var life = 2;
 var level = 1;
 
@@ -65,7 +61,6 @@ function preload() {
     this.load.image("alien1","alienYellow_walk1.png");
     this.load.image("alien2","alienYellow_walk2.png");
 
-
     // Charge les sons
     this.load.audio("gemme","gemme.ogg");
     this.load.audio("jump","jump.wav");
@@ -91,11 +86,9 @@ function create(){
     this.spawn = this.tilemap.findObject("objet", obj => obj.name === "spawn");
 
     //spawn enemis
-    this.spawn1 = this.tilemap.findObject("objet", obj => obj.name === "enemis1");
-    this.spawn2 = this.tilemap.findObject("objet", obj => obj.name === "enemis2");
-    this.spawn2F = this.tilemap.findObject("objet", obj => obj.name === "enemis2F");
-    this.spawn3 = this.tilemap.findObject("objet", obj => obj.name === "enemis3");
-    this.boss = this.tilemap.findObject("objet", obj => obj.name === "boss");
+    this.spawns = [];
+    this.spawns.push(this.tilemap.findObject("objet", obj => obj.name === "enemis1"));
+    this.spawns.push(this.tilemap.findObject("objet", obj => obj.name === "enemis2"));
 
     // Défini les limites de la carte
     this.worldLayer.setCollisionByProperty({colides : true});
@@ -153,7 +146,8 @@ function create(){
 
     // Coeur
     this.overlapLayer.setTileIndexCallback(68, AddLife, this);
-    //animation alien
+ 
+    // Animation alien
     this.anims.create({
         key: "alienAnim",
         frames: [
@@ -164,50 +158,27 @@ function create(){
         repeat: -1
     });
     
-    alienYellow = this.physics.add.sprite(this.spawn1.x,this.spawn1.y,"alien1").play("alienAnim");
-    this.physics.add.collider(alienYellow, this.worldLayer);
-    // this.physics.add.overlap(players, alienYellow, attaque);
-    alienYellow.setScale(0.5);
-    var tween = this.tweens.add({
-        targets : alienYellow,
-        x : 450,
-        ease : "Linear",
-        duration : 1000,
-        yoyo : true,
-        repeat : -1,
-        onStart : function (){},
-        onComplete : function (){},
-        onYoyo : function (){ alienYellow.flipX = !alienYellow.flipX},
-        onRepeat : function (){alienYellow.flipX = !alienYellow.flipX}
-    });
-        //animation alien2
-        this.anims.create({
-            key: "alienAnim",
-            frames: [
-                {key: "alien1"},
-                {key: "alien2"}
-            ],
-            frameRate: 8,
-            repeat: -1
-        });
-        alienYellow1 = this.physics.add.sprite(this.spawn2.x,this.spawn2.y,"alien1").play("alienAnim");
-        this.physics.add.collider(alienYellow1, this.worldLayer);
-        // this.physics.add.overlap(players, alienYellow, attaque);
-        alienYellow1.setScale(0.5);
+    aliensYellow.push(this.physics.add.sprite(this.spawns[0].x,this.spawns[0].y, "alien1").play("alienAnim"));
+    aliensYellow.push(this.physics.add.sprite(this.spawns[1].x,this.spawns[1].y, "alien1").play("alienAnim"));
+
+    aliensYellow.map((alienYellow, index) => {
+        this.physics.add.collider(alienYellow, this.worldLayer);
+        alienYellow.setScale(0.5);
         var tween = this.tweens.add({
-            targets : alienYellow1,
-            x : 450,
+            targets : alienYellow,
+            x : this.spawns[index].x + 150,
             ease : "Linear",
             duration : 1000,
             yoyo : true,
             repeat : -1,
             onStart : function (){},
             onComplete : function (){},
-            onYoyo : function (){ alienYellow1.flipX = !alienYellow1.flipX},
-            onRepeat : function (){alienYellow1.flipX = !alienYellow1.flipX}
+            onYoyo : function (){ alienYellow.flipX = !alienYellow.flipX},
+            onRepeat : function (){alienYellow.flipX = !alienYellow.flipX}
         });
+    });
 
-    //bouton du clavier
+    // Bouton du clavier
     cursor = this.input.keyboard.createCursorKeys();
     Akey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
     Skey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
@@ -297,17 +268,19 @@ function update(time, delta){
     AjusterTailleEcran();
 
     // Gère la collision entre le joueur et l'enemi.
-    this.physics.world.collide(players, alienYellow, function(player, enemy){
- 
-        // Lorsque le joueur saute sur l'enemi, tue l'enemi.
-        if(enemy.body.touching.up && player.body.touching.down){
-            alienYellow.destroy();
-        }
-        // Sinon blesse le joueur.
-        else {
-            PlayersBlesse(this);
-        }
-    }, null, this);
+    aliensYellow.map(alienYellow => {
+        this.physics.world.collide(players, alienYellow, function(player, enemy){
+    
+            // Lorsque le joueur saute sur l'enemi, tue l'enemi.
+            if(enemy.body.touching.up && player.body.touching.down){
+                alienYellow.destroy();
+            }
+            // Sinon blesse le joueur.
+            else {
+                PlayersBlesse(this);
+            }
+        }, null, this);
+    });
 }
 
 // Players blessé
